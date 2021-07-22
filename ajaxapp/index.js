@@ -1,30 +1,36 @@
 // const userId = "u-Hoshi"
 
-function main() {
-  fetchUserInfo("js-primer-example");
+async function main() {
+  try {
+      const userId = getUserId();
+      const userInfo = await fetchUserInfo(userId);
+      const view = createView(userInfo);
+      displayView(view);
+  } catch (error) {
+      console.error(`エラーが発生しました (${error})`);
+  }
 }
+
 
 function fetchUserInfo(userId) {
   
-  fetch(`https://api.github.com/users/${encodeURIComponent(userId)}`) // リクエストを送信
+  return fetch(`https://api.github.com/users/${encodeURIComponent(userId)}`) // リクエストを送信
     // 以下返ってくるレスポンスに対して処理
   .then(response=>{ // fetchでリクエストしたものがレスポンスを返却されるとthen以降が実行される
-    console.log(response.status)
-    console.error(response.ok)
+    console.log(response)
     if (!response.ok) {
-      console.error("エラーレスポンス",response)
+      // console.error("エラーレスポンス", response)
+      return Promise.reject(new Error(`${response.status}:${response.statusText}`))
      } else {
-      return response.json().then(userInfo => {
-        console.log(userInfo)
-          // HTMLの組み立て
-          const view = createView(userInfo);
-          // HTMLの挿入
-          displayView(view);
-      })
+      return response.json()
     }
-  }).catch(error => {
-    console.log(error)
+  // }).catch(error => {
+  //   console.log(error)
   })
+}
+
+function getUserId() {
+  return document.getElementById("userId").value
 }
 
 function createView(userInfo) {
@@ -43,4 +49,24 @@ function createView(userInfo) {
 function displayView(view) {
   const result = document.getElementById("result");
   result.innerHTML = view;
+}
+
+function escapeSpecialChars(str) {
+  return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+}
+
+function escapeHTML(strings, ...values) {
+  return strings.reduce((result, str, i) => {
+      const value = values[i - 1];
+      if (typeof value === "string") {
+          return result + escapeSpecialChars(value) + str;
+      } else {
+          return result + String(value) + str;
+      }
+  });
 }
